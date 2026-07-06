@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Нэвтрэх — MovieVIP</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+  <div class="auth-wrap">
+    <div class="panel">
+      <h1>Нэвтрэх</h1>
+      <p class="sub">VIP кино үзэхийн тулд нэвтэрнэ үү</p>
+      <div id="msg" class="msg"></div>
+      <form id="form">
+        <label>И-мэйл</label>
+        <input type="email" id="email" required autocomplete="email">
+        <label>Нууц үг</label>
+        <input type="password" id="password" required autocomplete="current-password">
+        <button class="btn btn-primary btn-block" type="submit">Нэвтрэх</button>
+      </form>
+      <p class="center">Бүртгэлгүй юу? <a class="link" href="/register.html">Бүртгүүлэх</a></p>
+    </div>
+  </div>
+  <script src="/js/common.js"></script>
+  <script>
+    (async () => { await bootChrome(); })();
+    document.getElementById('form').onsubmit = async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('msg'); msg.className = 'msg';
+      try {
+        await api('/auth/login', { method: 'POST', body: JSON.stringify({
+          email: email.value, password: password.value }) });
+        location.href = '/';
+      } catch (err) { msg.className = 'msg err'; msg.textContent = err.message; }
+    };
+  </script>
+</body>
+</html>

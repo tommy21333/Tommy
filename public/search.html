@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Хайлт — MovieVIP</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+  <main class="container">
+    <h2 class="section-title" id="title">Хайлтын үр дүн</h2>
+    <div id="content"><div class="spinner">Ачааллаж байна...</div></div>
+  </main>
+  <footer id="footer"></footer>
+  <script src="/js/common.js"></script>
+  <script>
+    async function main() {
+      await bootChrome();
+      const q = new URLSearchParams(location.search).get('q') || '';
+      document.getElementById('title').textContent = q ? `"${q}" — хайлтын үр дүн` : 'Бүх кино';
+      const c = document.getElementById('content');
+      let data;
+      try { data = await api('/movies?q=' + encodeURIComponent(q)); }
+      catch (e) { c.innerHTML = `<div class="msg err">${esc(e.message)}</div>`; return; }
+      c.innerHTML = data.movies.length
+        ? `<div class="grid">${data.movies.map((m) => `
+            <div class="card" onclick="location.href='/movie.html?id=${m.id}'">
+              ${posterHtml(m.poster_url, m.title)}
+              <div class="card-body">
+                <div class="card-title">${esc(m.title)}</div>
+                <div class="card-meta">${m.year || ''} ${m.genre ? '· ' + esc(m.genre) : ''}</div>
+              </div>
+            </div>`).join('')}</div>`
+        : `<p style="color:var(--muted)">Илэрц олдсонгүй.</p>`;
+    }
+    main();
+  </script>
+</body>
+</html>

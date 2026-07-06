@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIP эрх — MovieVIP</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+  <main class="container">
+    <h2 class="section-title">⭐ VIP гишүүнчлэл</h2>
+    <p style="color:var(--muted);max-width:640px">
+      Зөвхөн VIP эрхтэй хэрэглэгчид бүх киног хязгааргүй үзнэ. Багц сонгож хүсэлт илгээгээд,
+      төлбөрөө төлсний дараа админ таны VIP эрхийг идэвхжүүлнэ.
+      (Дараа нь QPay, SocialPay-р автоматаар төлөх боломж нэмэгдэнэ.)
+    </p>
+    <div id="status"></div>
+    <div id="plans" class="plans"><div class="spinner">Ачааллаж байна...</div></div>
+    <div id="msg" class="msg"></div>
+  </main>
+  <footer id="footer"></footer>
+  <script src="/js/common.js"></script>
+  <script>
+    async function main() {
+      await bootChrome();
+      const statusEl = document.getElementById('status');
+      if (CURRENT_USER && isVip()) {
+        const exp = CURRENT_USER.vip_expires_at
+          ? new Date(CURRENT_USER.vip_expires_at).toLocaleDateString('mn-MN')
+          : 'хугацаагүй';
+        statusEl.innerHTML = `<div class="msg ok">✅ Та VIP эрхтэй! Дуусах хугацаа: <b>${exp}</b>. <a class="link" href="/">Кино үзэх →</a></div>`;
+      } else if (!CURRENT_USER) {
+        statusEl.innerHTML = `<div class="msg err">VIP хүсэлт илгээхийн тулд эхлээд <a class="link" href="/login.html">нэвтэрнэ</a> үү.</div>`;
+      }
+
+      const { plans } = await api('/payments/plans');
+      const p = document.getElementById('plans');
+      p.innerHTML = plans.map((pl, i) => `
+        <div class="plan ${i === 1 ? 'featured' : ''}">
+          <h3>${esc(pl.name)}</h3>
+          <div class="price">${pl.amount.toLocaleString()}<small>₮</small></div>
+          <div style="color:var(--muted);margin-bottom:14px">${pl.days} хоног</div>
+          <button class="btn btn-gold btn-block" onclick="request('${pl.id}')">Хүсэлт илгээх</button>
+        </div>`).join('');
+    }
+
+    async function request(planId) {
+      const msg = document.getElementById('msg'); msg.className = 'msg';
+      if (!CURRENT_USER) { location.href = '/login.html'; return; }
+      try {
+        const r = await api('/payments/request', { method: 'POST', body: JSON.stringify({ plan: planId }) });
+        msg.className = 'msg ok'; msg.textContent = r.message;
+      } catch (e) { msg.className = 'msg err'; msg.textContent = e.message; }
+    }
+    main();
+  </script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Кино үзэх — MovieVIP</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+  <main class="container">
+    <div id="content"><div class="spinner">Ачааллаж байна...</div></div>
+  </main>
+  <footer id="footer"></footer>
+
+  <script src="/js/common.js"></script>
+  <script>
+    const movieId = new URLSearchParams(location.search).get('id');
+    let MOVIE, EPISODES = [];
+
+    async function main() {
+      await bootChrome();
+      const c = document.getElementById('content');
+      if (!movieId) { c.innerHTML = '<div class="msg err">Кино олдсонгүй</div>'; return; }
+
+      let data;
+      try { data = await api('/movies/' + movieId); }
+      catch (e) { c.innerHTML = `<div class="msg err">${esc(e.message)}</div>`; return; }
+      MOVIE = data.movie; EPISODES = data.episodes;
+
+      const chips = [];
+      if (MOVIE.year) chips.push(`<span class="tag">${MOVIE.year}</span>`);
+      if (MOVIE.genre) chips.push(`<span class="tag">${esc(MOVIE.genre)}</span>`);
+      if (MOVIE.country) chips.push(`<span class="tag">${esc(MOVIE.country)}</span>`);
+      chips.push(`<span class="tag">${MOVIE.is_series ? 'Олон ангит' : 'Кино'}</span>`);
+
+      c.innerHTML = `
+        <div class="detail">
+          <img class="poster-lg" src="${esc(MOVIE.poster_url) || ''}" alt=""
+               onerror="this.style.display='none'">
+          <div>
+            <h1>${esc(MOVIE.title)}</h1>
+            <div class="chips">${chips.join('')}</div>
+            <p class="desc">${esc(MOVIE.description) || 'Тайлбар оруулаагүй байна.'}</p>
+            <div><strong>Ангиуд:</strong></div>
+            <div class="ep-list" id="epList">
+              ${EPISODES.length ? EPISODES.map((e, i) => `
+                <button class="ep-btn ${i === 0 ? 'active' : ''}" data-id="${e.id}" onclick="playEpisode(${e.id}, this)">
+                  ${e.number}-р анги${e.duration ? ' · ' + esc(e.duration) : ''}
+                </button>`).join('') : '<span style="color:var(--muted)">Анги нэмээгүй байна</span>'}
+            </div>
+          </div>
+        </div>
+        <div class="player-wrap" id="playerWrap"></div>`;
+
+      if (EPISODES.length) playEpisode(EPISODES[0].id, document.querySelector('.ep-btn'));
+    }
+
+    async function playEpisode(epId, btn) {
+      document.querySelectorAll('.ep-btn').forEach((b) => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      const wrap = document.getElementById('playerWrap');
+      wrap.innerHTML = '<div class="spinner">Ачааллаж байна...</div>';
+
+      let data;
+      try {
+        data = await api('/watch/' + epId);
+      } catch (e) {
+        if (e.status === 401) return renderLocked(wrap, 'login');
+        if (e.status === 403) return renderLocked(wrap, 'vip');
+        wrap.innerHTML = `<div class="msg err">${esc(e.message)}</div>`;
+        return;
+      }
+      renderPlayer(wrap, data.episode);
+    }
+
+    function renderLocked(wrap, kind) {
+      if (kind === 'login') {
+        wrap.innerHTML = `<div class="locked">
+          <div class="lock-icon">🔒</div>
+          <h2>Кино үзэхийн тулд нэвтэрнэ үү</h2>
+          <p style="color:var(--muted)">Бүртгэлтэй бол нэвтэрч, VIP эрхтэйгээр үзнэ.</p>
+          <div style="display:flex;gap:10px">
+            <a class="btn btn-primary" href="/login.html">Нэвтрэх</a>
+            <a class="btn" href="/register.html">Бүртгүүлэх</a>
+          </div>
+        </div>`;
+      } else {
+        wrap.innerHTML = `<div class="locked">
+          <div class="lock-icon">⭐</div>
+          <h2>Энэ кино зөвхөн VIP гишүүдэд нээлттэй</h2>
+          <p style="color:var(--muted)">Төлбөр төлөөгүй хэрэглэгч кино үзэх боломжгүй. VIP эрх авснаар бүх киног үзнэ.</p>
+          <a class="btn btn-gold" href="/vip.html">⭐ VIP эрх авах</a>
+        </div>`;
+      }
+    }
+
+    function renderPlayer(wrap, ep) {
+      if (ep.video_type === 'embed') {
+        wrap.innerHTML = `<div class="player"><iframe src="${esc(ep.video_url)}" allowfullscreen allow="autoplay; encrypted-media"></iframe></div>`;
+        return;
+      }
+      if (ep.video_type === 'hls') {
+        wrap.innerHTML = `<div class="player"><video id="vid" controls playsinline></video></div>`;
+        const video = document.getElementById('vid');
+        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = ep.video_url;
+        } else {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js';
+          s.onload = () => {
+            if (window.Hls && Hls.isSupported()) {
+              const hls = new Hls(); hls.loadSource(ep.video_url); hls.attachMedia(video);
+            } else { video.src = ep.video_url; }
+          };
+          document.body.appendChild(s);
+        }
+        return;
+      }
+      // энгийн mp4/webm файл
+      wrap.innerHTML = `<div class="player"><video controls playsinline src="${esc(ep.video_url)}"></video></div>`;
+    }
+
+    main();
+  </script>
+</body>
+</html>

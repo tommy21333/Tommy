@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Бүртгүүлэх — MovieVIP</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+  <div class="auth-wrap">
+    <div class="panel">
+      <h1>Бүртгүүлэх</h1>
+      <p class="sub">Шинэ бүртгэл үүсгэ. VIP эрхийг админ идэвхжүүлнэ.</p>
+      <div id="msg" class="msg"></div>
+      <form id="form">
+        <label>Нэр</label>
+        <input type="text" id="name" required autocomplete="name">
+        <label>И-мэйл</label>
+        <input type="email" id="email" required autocomplete="email">
+        <label>Нууц үг (6+ тэмдэгт)</label>
+        <input type="password" id="password" required minlength="6" autocomplete="new-password">
+        <button class="btn btn-primary btn-block" type="submit">Бүртгүүлэх</button>
+      </form>
+      <p class="center">Бүртгэлтэй юу? <a class="link" href="/login.html">Нэвтрэх</a></p>
+    </div>
+  </div>
+  <script src="/js/common.js"></script>
+  <script>
+    (async () => { await bootChrome(); })();
+    document.getElementById('form').onsubmit = async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('msg'); msg.className = 'msg';
+      try {
+        await api('/auth/register', { method: 'POST', body: JSON.stringify({
+          name: name.value, email: email.value, password: password.value }) });
+        location.href = '/vip.html';
+      } catch (err) { msg.className = 'msg err'; msg.textContent = err.message; }
+    };
+  </script>
+</body>
+</html>
