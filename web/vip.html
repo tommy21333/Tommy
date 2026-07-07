@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIP эрх — MovieVIP</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+  <main class="container">
+    <h2 class="section-title">⭐ VIP гишүүнчлэл</h2>
+    <p style="color:var(--muted);max-width:640px">
+      Зөвхөн VIP эрхтэй хэрэглэгчид бүх киног хязгааргүй үзнэ. Багц сонгож хүсэлт илгээгээд,
+      төлбөрөө төлсний дараа админ таны VIP эрхийг идэвхжүүлнэ.
+      (Дараа нь QPay, SocialPay-р автоматаар төлөх боломж нэмэгдэнэ.)
+    </p>
+    <div id="status"></div>
+    <div class="plans" id="plans"></div>
+    <div id="msg" class="msg"></div>
+  </main>
+  <footer id="footer"></footer>
+  <script src="js/store.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    const PLANS = [
+      { id: 'm1', name: '1 сар', days: 30, amount: 15000 },
+      { id: 'm3', name: '3 сар', days: 90, amount: 39000 },
+      { id: 'm12', name: '1 жил', days: 365, amount: 120000 },
+    ];
+    (function () {
+      bootChrome();
+      const u = Store.current(); const st = document.getElementById('status');
+      if (u && isVip()) {
+        const exp = u.vip_expires_at ? new Date(u.vip_expires_at).toLocaleDateString('mn-MN') : 'хугацаагүй';
+        st.innerHTML = `<div class="msg ok">✅ Та VIP эрхтэй! Дуусах хугацаа: <b>${exp}</b>. <a class="link" href="index.html">Кино үзэх →</a></div>`;
+      } else if (!u) {
+        st.innerHTML = `<div class="msg err">VIP хүсэлт илгээхийн тулд эхлээд <a class="link" href="login.html">нэвтэрнэ</a> үү.</div>`;
+      }
+      document.getElementById('plans').innerHTML = PLANS.map((p, i) => `
+        <div class="plan ${i === 1 ? 'featured' : ''}"><h3>${p.name}</h3>
+          <div class="price">${p.amount.toLocaleString()}<small>₮</small></div>
+          <div style="color:var(--muted);margin-bottom:14px">${p.days} хоног</div>
+          <button class="btn btn-gold btn-block" onclick="request('${p.name}')">Хүсэлт илгээх</button></div>`).join('');
+    })();
+    function request(name) {
+      const msg = document.getElementById('msg');
+      if (!Store.current()) { location.href = 'login.html'; return; }
+      msg.className = 'msg ok';
+      msg.innerHTML = `"${name}" багцын хүсэлт хүлээн авлаа. Төлбөр төлсний дараа админтай холбогдоно уу — админ таны VIP эрхийг идэвхжүүлнэ.`;
+    }
+  </script>
+</body>
+</html>

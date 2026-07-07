@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MovieVIP — Онлайн кино</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+  <main class="container">
+    <div id="content"></div>
+  </main>
+  <footer id="footer"></footer>
+
+  <script src="js/store.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    function movieCard(m, flag) {
+      return `<div class="card ribbon" onclick="location.href='movie.html?id=${m.id}'">
+        ${flag ? `<span class="flag">${flag}</span>` : ''}
+        ${posterHtml(m.poster_url, m.title)}
+        <div class="card-body">
+          <div class="card-title">${esc(m.title)}</div>
+          <div class="card-meta">${m.year || ''} ${m.genre ? '· ' + esc(m.genre) : ''}</div>
+        </div></div>`;
+    }
+    (function () {
+      bootChrome();
+      const d = Store.home();
+      let html = '';
+      if (d.featured.length)
+        html += `<h2 class="section-title">🔥 Онцлох кино</h2><div class="grid">${d.featured.map((m) => movieCard(m, 'ОНЦЛОХ')).join('')}</div>`;
+      if (d.latestEpisodes.length)
+        html += `<h2 class="section-title">🆕 Шинэ ангиуд</h2><div class="grid">${d.latestEpisodes.map((e) => `
+          <div class="card ribbon" onclick="location.href='movie.html?id=${e.movie_id}'">
+            <span class="flag">${e.number}-р анги</span>${posterHtml(e.poster_url, e.title)}
+            <div class="card-body"><div class="card-title">${esc(e.title)}</div>
+            <div class="card-meta">${esc(e.episode_title || (e.number + '-р анги'))}</div></div></div>`).join('')}</div>`;
+      html += `<h2 class="section-title">🎬 Шинэ кино</h2>`;
+      html += d.latestMovies.length
+        ? `<div class="grid">${d.latestMovies.map((m) => movieCard(m)).join('')}</div>`
+        : `<p style="color:var(--muted)">Одоогоор кино нэмээгүй байна. Админ хэсгээс нэмнэ үү.</p>`;
+      document.getElementById('content').innerHTML = html;
+    })();
+  </script>
+</body>
+</html>
